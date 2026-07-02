@@ -19,7 +19,7 @@ const cityProfiles = {
   }
 };
 
-const intersections = [
+const demoIntersections = [
   {
     id: "main-3rd",
     name: "Main St & 3rd St",
@@ -202,8 +202,14 @@ const intersections = [
   }
 ];
 
+let activeIntersections = demoIntersections.map((item) => ({ ...item }));
+let dataSource = {
+  label: "Using built-in demo dataset",
+  imported: false
+};
+
 const state = {
-  selectedId: intersections[0].id,
+  selectedId: activeIntersections[0].id,
   budget: 85000,
   city: "dayton",
   priority: "impact",
@@ -220,6 +226,11 @@ const formatter = new Intl.NumberFormat("en-US", {
 const els = {
   activeCityName: document.querySelector("#activeCityName"),
   activeCityMeta: document.querySelector("#activeCityMeta"),
+  dataSourceLabel: document.querySelector("#dataSourceLabel"),
+  importResult: document.querySelector("#importResult"),
+  csvInput: document.querySelector("#csvInput"),
+  sampleCsvBtn: document.querySelector("#sampleCsvBtn"),
+  resetDataBtn: document.querySelector("#resetDataBtn"),
   citySelect: document.querySelector("#citySelect"),
   budgetInput: document.querySelector("#budgetInput"),
   budgetOutput: document.querySelector("#budgetOutput"),
@@ -258,11 +269,19 @@ const els = {
 };
 
 function getCityProfile() {
+  if (dataSource.imported) {
+    return {
+      name: "Uploaded city data",
+      meta: `${activeIntersections.length} imported intersections`,
+      multiplier: 1,
+      note: "Imported CSV dataset using local scoring assumptions."
+    };
+  }
   return cityProfiles[state.city];
 }
 
 function getFilteredIntersections() {
-  return intersections.filter((item) => state.issue === "all" || item.issueType === state.issue);
+  return activeIntersections.filter((item) => state.issue === "all" || item.issueType === state.issue);
 }
 
 function getSortedIntersections() {
@@ -505,6 +524,190 @@ function drawMap(sorted, shortlist) {
   });
 }
 
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      cell += '"';
+      i += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(cell);
+      if (row.some((value) => value.trim() !== "")) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.trim() !== "")) rows.push(row);
+  return rows;
+}
+
+function normalizeHeader(value) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+function toNumber(value, fallback = 0) {
+  const cleaned = String(value ?? "").replace(/[$,%]/g, "").trim();
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toBoolean(value) {
+  return ["true", "yes", "y", "1", "school", "school zone"].includes(String(value ?? "").trim().toLowerCase());
+}
+
+function coalesce(row, keys, fallback = "") {
+  for (const key of keys) {
+    if (row[key] != null && String(row[key]).trim() !== "") return row[key];
+  }
+  return fallback;
+}
+
+function inferIssueType(value) {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw.includes("bike") || raw.includes("cycle")) return "bike";
+  if (raw.includes("lane") || raw.includes("turn") || raw.includes("arrow")) return "lane";
+  if (raw.includes("night") || raw.includes("visibility") || raw.includes("stop")) return "visibility";
+  if (raw.includes("cross") || raw.includes("walk") || raw.includes("ped")) return "crosswalk";
+  return "crosswalk";
+}
+
+function buildRecommendation(issueType, issue) {
+  const templates = {
+    crosswalk: "Upgrade crossing markings, refresh stop bars, and prioritize pedestrian visibility treatments.",
+    lane: "Clarify lane assignment with arrows, lane extensions, and turn guidance through the intersection.",
+    bike: "Add bike conflict markings, dashed continuity lines, and companion yield signage.",
+    visibility: "Refresh stop bars and approach markings with retroreflective material for night visibility."
+  };
+  return issue ? `${templates[issueType]} Source note: ${issue}` : templates[issueType];
+}
+
+function importedRowToIntersection(row, index, count) {
+  const name = coalesce(row, ["intersection", "name", "location", "intersection_name"], `Imported intersection ${index + 1}`);
+  const issue = coalesce(row, ["issue", "problem", "notes", "complaint"], "Imported candidate for pavement marking review");
+  const issueType = inferIssueType(coalesce(row, ["issue_type", "type", "category"], issue));
+  const incidents = toNumber(coalesce(row, ["incidents", "crashes", "crash_count", "reports"], ""), 0);
+  const markingAge = toNumber(coalesce(row, ["marking_age", "age", "years_since_marking", "last_marked_years"], ""), 3.5);
+  const costLow = Math.max(5000, toNumber(coalesce(row, ["cost_low", "low_cost", "estimated_cost_low"], ""), 9000 + incidents * 850));
+  const costHigh = Math.max(costLow + 3000, toNumber(coalesce(row, ["cost_high", "high_cost", "estimated_cost_high"], ""), costLow * 1.45));
+  const schoolZone = toBoolean(coalesce(row, ["school_zone", "school", "near_school"], ""));
+  const lat = toNumber(coalesce(row, ["lat", "latitude"], ""), Number.NaN);
+  const lng = toNumber(coalesce(row, ["lng", "lon", "long", "longitude"], ""), Number.NaN);
+  const hasGeo = Number.isFinite(lat) && Number.isFinite(lng);
+  const angle = (index / Math.max(count, 1)) * Math.PI * 2;
+  const x = hasGeo ? 18 + Math.abs(lng % 1) * 64 : 50 + Math.cos(angle) * 30;
+  const y = hasGeo ? 18 + Math.abs(lat % 1) * 64 : 50 + Math.sin(angle) * 28;
+  const risk = Math.min(99, Math.round(42 + incidents * 2.4 + markingAge * 5 + (schoolZone ? 8 : 0)));
+  const benefit = Math.min(38, Math.max(12, Math.round(risk * 0.27 + incidents * 0.35)));
+  const value = Math.min(99, Math.round(benefit / ((costLow + costHigh) / 2 / 10000) * 18));
+
+  return {
+    id: `imported-${index + 1}`,
+    name,
+    x: Math.max(8, Math.min(92, x)),
+    y: Math.max(8, Math.min(92, y)),
+    issueType,
+    issue,
+    incidents,
+    markingAge,
+    risk,
+    benefit,
+    costLow: Math.round(costLow),
+    costHigh: Math.round(costHigh),
+    value,
+    schoolZone,
+    timeline: costHigh > 35000 ? "2 night closures" : "1 day work order",
+    vendorFit: issueType === "bike" ? "Specialty color pavement vendor" : "Pavement marking vendor",
+    evidence: [
+      ["CSV import", `${incidents} incidents and ${markingAge.toFixed(1)} year marking age supplied or inferred.`],
+      ["Cost model", `${formatter.format(costLow)}-${formatter.format(costHigh)} imported or estimated range.`],
+      ["Context", schoolZone ? "School-zone flag increases priority." : "General network candidate."]
+    ],
+    implementation: [
+      "Verify geometry and marking condition in field review.",
+      "Confirm quantities before vendor quote.",
+      "Bundle with nearby candidates where traffic control overlaps."
+    ],
+    recommendation: buildRecommendation(issueType, issue)
+  };
+}
+
+function loadImportedCsv(text, fileName) {
+  const rows = parseCsv(text);
+  if (rows.length < 2) throw new Error("CSV needs a header row and at least one data row.");
+
+  const headers = rows[0].map(normalizeHeader);
+  const records = rows.slice(1).map((values) => {
+    return headers.reduce((record, header, index) => {
+      record[header] = values[index] ?? "";
+      return record;
+    }, {});
+  });
+
+  const imported = records
+    .filter((row) => Object.values(row).some((value) => String(value).trim() !== ""))
+    .map((row, index, all) => importedRowToIntersection(row, index, all.length));
+
+  if (imported.length === 0) throw new Error("CSV did not contain usable intersection rows.");
+
+  activeIntersections = imported;
+  dataSource = {
+    label: `Using uploaded CSV: ${fileName}`,
+    imported: true
+  };
+  state.selectedId = activeIntersections[0].id;
+  state.issue = "all";
+  els.issueSelect.value = "all";
+  els.importResult.textContent = `${imported.length} intersections imported. Scores and recommendations generated from CSV fields.`;
+  render();
+}
+
+function resetDemoData() {
+  activeIntersections = demoIntersections.map((item) => ({ ...item }));
+  dataSource = {
+    label: "Using built-in demo dataset",
+    imported: false
+  };
+  state.selectedId = activeIntersections[0].id;
+  state.issue = "all";
+  els.issueSelect.value = "all";
+  els.csvInput.value = "";
+  els.importResult.textContent = "No uploaded data yet.";
+  render();
+}
+
+function downloadSampleCsv() {
+  const csv = [
+    "intersection,issue_type,incidents,marking_age,cost_low,cost_high,school_zone,lat,lng,notes",
+    "\"Main St & 5th Ave\",crosswalk,16,5.4,18000,28000,no,39.7589,-84.1916,\"Faded crosswalk and stop bars\"",
+    "\"Oak Rd & School Dr\",lane,9,4.1,14000,22000,yes,39.7712,-84.1831,\"Lane arrows unclear near school crossing\"",
+    "\"River Pkwy & Mill St\",bike,6,3.8,16000,25000,no,39.7521,-84.2042,\"Bike lane conflict at right turn\""
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "trafficmark-sample.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function drawDistricts(ctx, width, height) {
   ctx.fillStyle = "#c9d9cf";
   ctx.fillRect(0, 0, width, 120);
@@ -577,6 +780,7 @@ function renderCityProfile() {
   const profile = getCityProfile();
   els.activeCityName.textContent = profile.name;
   els.activeCityMeta.textContent = profile.meta;
+  els.dataSourceLabel.textContent = dataSource.label;
 }
 
 function render() {
@@ -595,6 +799,29 @@ function render() {
 els.citySelect.addEventListener("change", (event) => {
   state.city = event.target.value;
   render();
+});
+
+els.csvInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    loadImportedCsv(text, file.name);
+    showToast(`Imported ${file.name}.`);
+  } catch (error) {
+    els.importResult.textContent = error.message;
+    showToast("CSV import failed. Check required columns and formatting.");
+  }
+});
+
+els.sampleCsvBtn.addEventListener("click", () => {
+  downloadSampleCsv();
+});
+
+els.resetDataBtn.addEventListener("click", () => {
+  resetDemoData();
+  showToast("Demo dataset restored.");
 });
 
 els.budgetInput.addEventListener("input", (event) => {
@@ -641,5 +868,11 @@ els.refreshBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("resize", render);
+
+window.TrafficMarkML = {
+  importCsv: loadImportedCsv,
+  resetDemoData,
+  downloadSampleCsv
+};
 
 render();

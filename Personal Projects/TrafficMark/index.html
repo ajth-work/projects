@@ -90,6 +90,33 @@
           </label>
         </section>
 
+        <section class="data-import-section" aria-label="Data import">
+          <div class="section-heading">
+            <div>
+              <h2>Data import</h2>
+              <span id="dataSourceLabel">Using built-in demo dataset</span>
+            </div>
+            <div class="import-actions">
+              <button class="secondary-button" id="sampleCsvBtn" type="button">Download sample CSV</button>
+              <button class="secondary-button" id="resetDataBtn" type="button">Reset demo data</button>
+            </div>
+          </div>
+          <div class="import-grid">
+            <label class="file-drop">
+              <span>Upload intersection CSV</span>
+              <input id="csvInput" type="file" accept=".csv,text/csv" />
+            </label>
+            <div class="schema-note">
+              <strong>Supported columns</strong>
+              <p>intersection, issue_type, incidents, marking_age, cost_low, cost_high, school_zone, lat, lng, notes</p>
+            </div>
+            <div class="schema-note">
+              <strong>Import result</strong>
+              <p id="importResult">No uploaded data yet.</p>
+            </div>
+          </div>
+        </section>
+
         <section class="scenario-strip" aria-label="Budget scenarios">
           <button class="scenario-card active" type="button" data-budget="85000" data-priority="impact">
             <span>Recommended package</span>
@@ -200,6 +227,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
+    <script src="app.js?v=csv-import-1"></script>
   </body>
 </html>
