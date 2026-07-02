@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrafficMark ML</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="TrafficMark workspace navigation">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">TM</div>
+          <div>
+            <div class="brand-name">TrafficMark Systems</div>
+            <div class="product-name">TrafficMark ML</div>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Primary">
+          <button class="nav-item active" type="button">
+            <span aria-hidden="true">▦</span>
+            Analysis
+          </button>
+          <button class="nav-item" type="button">
+            <span aria-hidden="true">◎</span>
+            City Limits
+          </button>
+          <button class="nav-item" type="button">
+            <span aria-hidden="true">◫</span>
+            Cost Model
+          </button>
+          <button class="nav-item" type="button">
+            <span aria-hidden="true">▤</span>
+            Reports
+          </button>
+        </nav>
+
+        <div class="sidebar-panel">
+          <div class="panel-label">Active City</div>
+          <strong>Dayton, OH</strong>
+          <span>142 signalized intersections</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Intersection marking intelligence</p>
+            <h1>City safety priority board</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" id="refreshBtn" type="button" title="Refresh analysis" aria-label="Refresh analysis">↻</button>
+            <button class="primary-button" id="exportBtn" type="button">Export shortlist</button>
+          </div>
+        </header>
+
+        <section class="metrics" aria-label="Citywide summary">
+          <article class="metric">
+            <span>High priority</span>
+            <strong id="highPriorityCount">0</strong>
+          </article>
+          <article class="metric">
+            <span>Projected cost</span>
+            <strong id="projectedCost">$0</strong>
+          </article>
+          <article class="metric">
+            <span>Safety impact</span>
+            <strong id="safetyImpact">0%</strong>
+          </article>
+          <article class="metric">
+            <span>Avg. marking age</span>
+            <strong id="avgAge">0 yr</strong>
+          </article>
+        </section>
+
+        <section class="controls-band" aria-label="Analysis controls">
+          <label>
+            Budget
+            <input id="budgetInput" type="range" min="15000" max="250000" step="5000" value="85000" />
+            <output id="budgetOutput">$85,000</output>
+          </label>
+          <label>
+            Priority view
+            <select id="prioritySelect">
+              <option value="impact">Highest safety impact</option>
+              <option value="value">Best cost efficiency</option>
+              <option value="age">Oldest markings</option>
+              <option value="incidents">Most incidents</option>
+            </select>
+          </label>
+          <label class="toggle">
+            <input id="schoolZoneToggle" type="checkbox" />
+            <span>School-zone emphasis</span>
+          </label>
+        </section>
+
+        <div class="content-grid">
+          <section class="map-panel" aria-label="City intersection map">
+            <div class="map-header">
+              <div>
+                <h2>Detected intersections</h2>
+                <p id="mapCaption">Risk-ranked from imagery, incidents, and estimated marking age.</p>
+              </div>
+              <span class="status-pill">Model v0.1</span>
+            </div>
+            <div class="map-stage">
+              <canvas id="cityMap" width="920" height="620" aria-label="Illustrated city map with intersection risk points"></canvas>
+            </div>
+          </section>
+
+          <section class="detail-panel" aria-label="Selected intersection details">
+            <div class="section-heading">
+              <h2 id="detailTitle">Intersection</h2>
+              <span id="detailRank" class="rank-badge">#1</span>
+            </div>
+            <div class="score-row">
+              <div>
+                <span>Risk score</span>
+                <strong id="riskScore">0</strong>
+              </div>
+              <div>
+                <span>Cost range</span>
+                <strong id="costRange">$0</strong>
+              </div>
+              <div>
+                <span>Benefit</span>
+                <strong id="benefitScore">0%</strong>
+              </div>
+            </div>
+
+            <div class="evidence-list" id="evidenceList"></div>
+
+            <div class="recommendation-box">
+              <h3>Recommended update</h3>
+              <p id="recommendationText"></p>
+            </div>
+          </section>
+        </div>
+
+        <section class="table-section" aria-label="Prioritized intersections">
+          <div class="section-heading">
+            <h2>Shortlist</h2>
+            <span id="shortlistCount">0 selected</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Intersection</th>
+                  <th>Issue</th>
+                  <th>Incidents</th>
+                  <th>Age</th>
+                  <th>Cost</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="intersectionTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
