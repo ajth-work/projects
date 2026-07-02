@@ -175,6 +175,72 @@
           </section>
         </div>
 
+        <section class="imagery-section" aria-label="GPS imagery AI review">
+          <div class="section-heading">
+            <div>
+              <h2>GPS imagery review</h2>
+              <span id="imageryStatus">Prototype imagery mode - ready</span>
+            </div>
+            <div class="import-actions">
+              <button class="secondary-button" id="useSelectedBtn" type="button">Use selected intersection</button>
+              <button class="secondary-button" id="captureViewBtn" type="button">Capture current view</button>
+              <button class="primary-button" id="runAiReviewBtn" type="button">Run AI review</button>
+            </div>
+          </div>
+
+          <div class="imagery-grid">
+            <div class="imagery-controls">
+              <label>
+                Latitude
+                <input id="latInput" type="number" step="0.0001" value="39.7589" />
+              </label>
+              <label>
+                Longitude
+                <input id="lngInput" type="number" step="0.0001" value="-84.1916" />
+              </label>
+              <label>
+                Zoom
+                <input id="zoomInput" type="range" min="16" max="21" step="1" value="19" />
+                <output id="zoomOutput">19</output>
+              </label>
+              <label>
+                Imagery source
+                <select id="imagerySourceSelect">
+                  <option value="prototype">Prototype aerial render</option>
+                  <option value="provider">External satellite provider</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="imagery-canvas-wrap">
+              <div class="canvas-label">Current imagery view</div>
+              <canvas id="imageryCanvas" width="820" height="520" aria-label="Prototype satellite imagery view"></canvas>
+            </div>
+
+            <div class="imagery-canvas-wrap">
+              <div class="canvas-label">Recommended mockup</div>
+              <canvas id="mockupCanvas" width="820" height="520" aria-label="AI generated recommendation mockup preview"></canvas>
+            </div>
+          </div>
+
+          <div class="ai-review-grid">
+            <article class="ai-panel">
+              <h3>AI view review</h3>
+              <p id="aiReviewText">Capture the current imagery view, then run analysis to generate visual findings.</p>
+            </article>
+            <article class="ai-panel">
+              <h3>Recommended visual changes</h3>
+              <ul id="aiRecommendationList">
+                <li>Select an intersection to prepare a mockup package.</li>
+              </ul>
+            </article>
+            <article class="ai-panel">
+              <h3>Production integration</h3>
+              <p>Real satellite imagery and AI image generation should run through a backend endpoint so provider keys and model credentials stay private.</p>
+            </article>
+          </div>
+        </section>
+
         <section class="report-section" aria-label="City report preview">
           <div class="section-heading">
             <div>
@@ -227,6 +293,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=csv-import-1"></script>
+    <script src="app.js?v=imagery-review-1"></script>
   </body>
 </html>

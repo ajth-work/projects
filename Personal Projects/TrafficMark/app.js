@@ -214,7 +214,14 @@ const state = {
   city: "dayton",
   priority: "impact",
   issue: "all",
-  schoolZone: false
+  schoolZone: false,
+  imagery: {
+    lat: 39.7589,
+    lng: -84.1916,
+    zoom: 19,
+    captured: false,
+    analyzed: false
+  }
 };
 
 const formatter = new Intl.NumberFormat("en-US", {
@@ -239,6 +246,19 @@ const els = {
   schoolZoneToggle: document.querySelector("#schoolZoneToggle"),
   table: document.querySelector("#intersectionTable"),
   canvas: document.querySelector("#cityMap"),
+  imageryStatus: document.querySelector("#imageryStatus"),
+  latInput: document.querySelector("#latInput"),
+  lngInput: document.querySelector("#lngInput"),
+  zoomInput: document.querySelector("#zoomInput"),
+  zoomOutput: document.querySelector("#zoomOutput"),
+  imagerySourceSelect: document.querySelector("#imagerySourceSelect"),
+  imageryCanvas: document.querySelector("#imageryCanvas"),
+  mockupCanvas: document.querySelector("#mockupCanvas"),
+  useSelectedBtn: document.querySelector("#useSelectedBtn"),
+  captureViewBtn: document.querySelector("#captureViewBtn"),
+  runAiReviewBtn: document.querySelector("#runAiReviewBtn"),
+  aiReviewText: document.querySelector("#aiReviewText"),
+  aiRecommendationList: document.querySelector("#aiRecommendationList"),
   detailTitle: document.querySelector("#detailTitle"),
   detailRank: document.querySelector("#detailRank"),
   riskScore: document.querySelector("#riskScore"),
@@ -437,6 +457,11 @@ function renderDetails(sorted) {
   });
 }
 
+function getSelectedIntersection() {
+  const sorted = getSortedIntersections();
+  return sorted.find((item) => item.id === state.selectedId) ?? sorted[0] ?? activeIntersections[0];
+}
+
 function labelForIssue(issueType) {
   const labels = {
     crosswalk: "Crosswalk package",
@@ -522,6 +547,213 @@ function drawMap(sorted, shortlist) {
     ctx.strokeStyle = "#ffffff";
     ctx.stroke();
   });
+}
+
+function drawImageryView() {
+  const canvas = els.imageryCanvas;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+  const selected = getSelectedIntersection();
+  const seed = Math.abs(Math.sin(state.imagery.lat * 12.9898 + state.imagery.lng * 78.233)) * 10000;
+  const roadAngle = ((seed % 28) - 14) * (Math.PI / 180);
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#8d9a81";
+  ctx.fillRect(0, 0, width, height);
+  drawAerialBlocks(ctx, width, height, seed);
+  drawAerialRoad(ctx, width, height, roadAngle, 118, "#4d5358");
+  drawAerialRoad(ctx, width, height, roadAngle + Math.PI / 2, 96, "#535b61");
+  drawExistingMarkings(ctx, width, height, selected, false);
+  drawCompassAndGps(ctx, width, height);
+}
+
+function drawMockupView() {
+  const canvas = els.mockupCanvas;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+  const selected = getSelectedIntersection();
+  const seed = Math.abs(Math.sin(state.imagery.lat * 12.9898 + state.imagery.lng * 78.233)) * 10000;
+  const roadAngle = ((seed % 28) - 14) * (Math.PI / 180);
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#8d9a81";
+  ctx.fillRect(0, 0, width, height);
+  drawAerialBlocks(ctx, width, height, seed);
+  drawAerialRoad(ctx, width, height, roadAngle, 118, "#4d5358");
+  drawAerialRoad(ctx, width, height, roadAngle + Math.PI / 2, 96, "#535b61");
+  drawExistingMarkings(ctx, width, height, selected, true);
+  drawRecommendationOverlay(ctx, width, height, selected);
+  drawCompassAndGps(ctx, width, height);
+}
+
+function drawMockupPlaceholder() {
+  const canvas = els.mockupCanvas;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#eef2f4";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "#c7d3de";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([14, 12]);
+  ctx.strokeRect(28, 28, width - 56, height - 56);
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#5d6b78";
+  ctx.font = "22px system-ui, sans-serif";
+  ctx.fillText("Run AI review to generate a recommended mockup", 64, height / 2);
+  ctx.font = "15px system-ui, sans-serif";
+  ctx.fillText("Prototype preview: future backend can replace this with image-model output.", 64, height / 2 + 30);
+}
+
+function drawAerialBlocks(ctx, width, height, seed) {
+  const blocks = [
+    [30, 28, 190, 95, "#a0aa7f"],
+    [600, 38, 170, 120, "#7f9a78"],
+    [52, 360, 220, 118, "#b6a98a"],
+    [570, 340, 210, 135, "#8fa3a2"],
+    [315, 40, 160, 92, "#9da67b"],
+    [320, 380, 160, 96, "#b5b08e"]
+  ];
+  blocks.forEach(([x, y, w, h, color], index) => {
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.72 + ((seed + index) % 10) / 60;
+    ctx.fillRect(x, y, w, h);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawAerialRoad(ctx, width, height, angle, roadWidth, color) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const length = Math.hypot(width, height);
+  const dx = Math.cos(angle) * length;
+  const dy = Math.sin(angle) * length;
+  ctx.beginPath();
+  ctx.moveTo(cx - dx, cy - dy);
+  ctx.lineTo(cx + dx, cy + dy);
+  ctx.lineWidth = roadWidth;
+  ctx.strokeStyle = color;
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx - dx, cy - dy);
+  ctx.lineTo(cx + dx, cy + dy);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.38)";
+  ctx.setLineDash([26, 22]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawExistingMarkings(ctx, width, height, selected, enhanced) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const fade = enhanced ? 0.96 : 0.35;
+  ctx.strokeStyle = `rgba(255,255,255,${fade})`;
+  ctx.lineWidth = enhanced ? 6 : 4;
+
+  if (selected.issueType === "crosswalk" || enhanced) {
+    drawCrosswalk(ctx, cx - 170, cy - 72, 96, 34, enhanced);
+    drawCrosswalk(ctx, cx + 72, cy + 40, 96, 34, enhanced);
+  }
+
+  if (selected.issueType === "lane" || enhanced) {
+    drawArrow(ctx, cx - 42, cy + 110, enhanced ? "#ffffff" : "rgba(255,255,255,0.45)");
+    drawArrow(ctx, cx + 72, cy - 126, enhanced ? "#ffffff" : "rgba(255,255,255,0.45)");
+  }
+
+  if (selected.issueType === "visibility" || enhanced) {
+    ctx.fillStyle = `rgba(255,255,255,${fade})`;
+    ctx.fillRect(cx - 132, cy - 18, 94, enhanced ? 7 : 4);
+    ctx.fillRect(cx + 42, cy + 16, 94, enhanced ? 7 : 4);
+  }
+}
+
+function drawRecommendationOverlay(ctx, width, height, selected) {
+  const cx = width / 2;
+  const cy = height / 2;
+  if (selected.issueType === "bike") {
+    ctx.fillStyle = "rgba(35, 154, 89, 0.84)";
+    ctx.fillRect(cx - 270, cy + 82, 210, 18);
+    ctx.fillRect(cx + 60, cy - 105, 210, 18);
+  }
+
+  ctx.strokeStyle = "rgba(255, 221, 87, 0.92)";
+  ctx.lineWidth = 4;
+  ctx.setLineDash([12, 10]);
+  ctx.strokeRect(cx - 190, cy - 122, 380, 244);
+  ctx.setLineDash([]);
+}
+
+function drawCrosswalk(ctx, x, y, width, height, enhanced) {
+  ctx.save();
+  ctx.fillStyle = `rgba(255,255,255,${enhanced ? 0.95 : 0.42})`;
+  const stripeWidth = 10;
+  for (let offset = 0; offset < width; offset += stripeWidth * 2) {
+    ctx.fillRect(x + offset, y, stripeWidth, height);
+  }
+  ctx.restore();
+}
+
+function drawArrow(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 36);
+  ctx.lineTo(x + 20, y - 8);
+  ctx.lineTo(x + 8, y - 8);
+  ctx.lineTo(x + 8, y + 36);
+  ctx.lineTo(x - 8, y + 36);
+  ctx.lineTo(x - 8, y - 8);
+  ctx.lineTo(x - 20, y - 8);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCompassAndGps(ctx, width, height) {
+  ctx.fillStyle = "rgba(22, 33, 43, 0.74)";
+  ctx.fillRect(14, 14, 250, 58);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "18px system-ui, sans-serif";
+  ctx.fillText(`${state.imagery.lat.toFixed(4)}, ${state.imagery.lng.toFixed(4)}`, 28, 40);
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.fillText(`Zoom ${state.imagery.zoom} - current view capture`, 28, 60);
+}
+
+function runPrototypeAiReview() {
+  const selected = getSelectedIntersection();
+  const review = [
+    `${selected.name} shows a ${labelForIssue(selected.issueType).toLowerCase()} issue pattern.`,
+    `Risk score ${selected.adjustedRisk ?? selected.risk} is driven by ${selected.incidents} incidents and ${selected.markingAge.toFixed(1)} year marking age.`,
+    "The current imagery view should be reviewed for crosswalk contrast, stop-bar visibility, lane assignment clarity, and conflict-area guidance."
+  ].join(" ");
+
+  const recommendations = selected.implementation.length
+    ? selected.implementation
+    : ["Refresh pavement markings.", "Confirm dimensions before vendor estimate.", "Bundle with nearby work orders."];
+
+  els.aiReviewText.textContent = review;
+  els.aiRecommendationList.innerHTML = "";
+  recommendations.forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    els.aiRecommendationList.appendChild(li);
+  });
+  state.imagery.analyzed = true;
+  els.imageryStatus.textContent = "Prototype AI review generated from current view and selected intersection";
+  drawMockupView();
+}
+
+function syncImageryInputs() {
+  els.latInput.value = state.imagery.lat.toFixed(4);
+  els.lngInput.value = state.imagery.lng.toFixed(4);
+  els.zoomInput.value = String(state.imagery.zoom);
+  els.zoomOutput.textContent = String(state.imagery.zoom);
 }
 
 function parseCsv(text) {
@@ -787,6 +1019,7 @@ function render() {
   els.budgetOutput.textContent = formatter.format(state.budget);
   renderCityProfile();
   renderScenarioState();
+  syncImageryInputs();
   const sorted = getSortedIntersections();
   const shortlist = getShortlist(sorted);
   renderMetrics(shortlist);
@@ -794,6 +1027,12 @@ function render() {
   renderDetails(sorted);
   renderReport(shortlist);
   drawMap(sorted, shortlist);
+  drawImageryView();
+  if (state.imagery.analyzed) {
+    drawMockupView();
+  } else {
+    drawMockupPlaceholder();
+  }
 }
 
 els.citySelect.addEventListener("change", (event) => {
@@ -822,6 +1061,61 @@ els.sampleCsvBtn.addEventListener("click", () => {
 els.resetDataBtn.addEventListener("click", () => {
   resetDemoData();
   showToast("Demo dataset restored.");
+});
+
+els.useSelectedBtn.addEventListener("click", () => {
+  const selected = getSelectedIntersection();
+  state.imagery.lat = 39.7 + selected.y / 100;
+  state.imagery.lng = -84.6 + selected.x / 100;
+  state.imagery.captured = false;
+  state.imagery.analyzed = false;
+  els.aiReviewText.textContent = "Capture the current imagery view, then run analysis to generate visual findings.";
+  els.imageryStatus.textContent = `Loaded GPS view for ${selected.name}`;
+  render();
+});
+
+els.captureViewBtn.addEventListener("click", () => {
+  state.imagery.captured = true;
+  state.imagery.analyzed = false;
+  els.imageryStatus.textContent = "Current imagery view captured for AI review";
+  drawImageryView();
+  showToast("Current imagery view captured.");
+});
+
+els.runAiReviewBtn.addEventListener("click", () => {
+  if (!state.imagery.captured) {
+    state.imagery.captured = true;
+    drawImageryView();
+  }
+  runPrototypeAiReview();
+  showToast("Prototype AI imagery review generated.");
+});
+
+els.latInput.addEventListener("input", (event) => {
+  state.imagery.lat = toNumber(event.target.value, state.imagery.lat);
+  state.imagery.analyzed = false;
+  drawImageryView();
+});
+
+els.lngInput.addEventListener("input", (event) => {
+  state.imagery.lng = toNumber(event.target.value, state.imagery.lng);
+  state.imagery.analyzed = false;
+  drawImageryView();
+});
+
+els.zoomInput.addEventListener("input", (event) => {
+  state.imagery.zoom = toNumber(event.target.value, state.imagery.zoom);
+  els.zoomOutput.textContent = String(state.imagery.zoom);
+  state.imagery.analyzed = false;
+  drawImageryView();
+});
+
+els.imagerySourceSelect.addEventListener("change", (event) => {
+  const status =
+    event.target.value === "provider"
+      ? "External satellite provider selected - backend tile integration required"
+      : "Prototype imagery mode - ready";
+  els.imageryStatus.textContent = status;
 });
 
 els.budgetInput.addEventListener("input", (event) => {
@@ -872,7 +1166,8 @@ window.addEventListener("resize", render);
 window.TrafficMarkML = {
   importCsv: loadImportedCsv,
   resetDemoData,
-  downloadSampleCsv
+  downloadSampleCsv,
+  runPrototypeAiReview
 };
 
 render();

@@ -195,7 +195,8 @@ h3 {
 .map-panel,
 .table-section,
 .report-section,
-.data-import-section {
+.data-import-section,
+.imagery-section {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -278,7 +279,8 @@ select {
 .detail-panel,
 .table-section,
 .report-section,
-.data-import-section {
+.data-import-section,
+.imagery-section {
   min-width: 0;
   padding: 16px;
 }
@@ -320,6 +322,91 @@ select {
 .schema-note p {
   color: var(--muted);
   line-height: 1.4;
+}
+
+.imagery-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.55fr) minmax(320px, 1fr) minmax(320px, 1fr);
+  gap: 12px;
+}
+
+.imagery-controls {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.imagery-controls label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: #364452;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.imagery-controls input,
+.imagery-controls select {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid #bac4cf;
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.imagery-canvas-wrap {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.canvas-label {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  color: #334252;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.imagery-canvas-wrap canvas {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #d7ddd5;
+}
+
+.ai-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ai-panel {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.ai-panel p,
+.ai-panel li {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.ai-panel ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
 }
 
 .scenario-strip {
@@ -647,7 +734,9 @@ tbody tr.selected {
   .nav-list,
   .scenario-strip,
   .report-grid,
-  .import-grid {
+  .import-grid,
+  .imagery-grid,
+  .ai-review-grid {
     grid-template-columns: 1fr;
   }
 
