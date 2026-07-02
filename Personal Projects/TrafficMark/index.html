@@ -18,28 +18,16 @@
         </div>
 
         <nav class="nav-list" aria-label="Primary">
-          <button class="nav-item active" type="button">
-            <span aria-hidden="true">▦</span>
-            Analysis
-          </button>
-          <button class="nav-item" type="button">
-            <span aria-hidden="true">◎</span>
-            City Limits
-          </button>
-          <button class="nav-item" type="button">
-            <span aria-hidden="true">◫</span>
-            Cost Model
-          </button>
-          <button class="nav-item" type="button">
-            <span aria-hidden="true">▤</span>
-            Reports
-          </button>
+          <button class="nav-item active" type="button"><span aria-hidden="true">A</span>Analysis</button>
+          <button class="nav-item" type="button"><span aria-hidden="true">M</span>City Limits</button>
+          <button class="nav-item" type="button"><span aria-hidden="true">$</span>Cost Model</button>
+          <button class="nav-item" type="button"><span aria-hidden="true">R</span>Reports</button>
         </nav>
 
         <div class="sidebar-panel">
           <div class="panel-label">Active City</div>
-          <strong>Dayton, OH</strong>
-          <span>142 signalized intersections</span>
+          <strong id="activeCityName">Dayton, OH</strong>
+          <span id="activeCityMeta">142 signalized intersections</span>
         </div>
       </aside>
 
@@ -50,31 +38,28 @@
             <h1>City safety priority board</h1>
           </div>
           <div class="topbar-actions">
-            <button class="icon-button" id="refreshBtn" type="button" title="Refresh analysis" aria-label="Refresh analysis">↻</button>
+            <button class="icon-button" id="refreshBtn" type="button" title="Refresh analysis" aria-label="Refresh analysis">R</button>
             <button class="primary-button" id="exportBtn" type="button">Export shortlist</button>
           </div>
         </header>
 
         <section class="metrics" aria-label="Citywide summary">
-          <article class="metric">
-            <span>High priority</span>
-            <strong id="highPriorityCount">0</strong>
-          </article>
-          <article class="metric">
-            <span>Projected cost</span>
-            <strong id="projectedCost">$0</strong>
-          </article>
-          <article class="metric">
-            <span>Safety impact</span>
-            <strong id="safetyImpact">0%</strong>
-          </article>
-          <article class="metric">
-            <span>Avg. marking age</span>
-            <strong id="avgAge">0 yr</strong>
-          </article>
+          <article class="metric"><span>High priority</span><strong id="highPriorityCount">0</strong></article>
+          <article class="metric"><span>Projected cost</span><strong id="projectedCost">$0</strong></article>
+          <article class="metric"><span>Safety impact</span><strong id="safetyImpact">0%</strong></article>
+          <article class="metric"><span>Avg. marking age</span><strong id="avgAge">0 yr</strong></article>
+          <article class="metric"><span>Payback tier</span><strong id="paybackTier">-</strong></article>
         </section>
 
         <section class="controls-band" aria-label="Analysis controls">
+          <label>
+            City profile
+            <select id="citySelect">
+              <option value="dayton">Dayton, OH</option>
+              <option value="columbus">Columbus pilot district</option>
+              <option value="toledo">Toledo riverfront zone</option>
+            </select>
+          </label>
           <label>
             Budget
             <input id="budgetInput" type="range" min="15000" max="250000" step="5000" value="85000" />
@@ -89,10 +74,38 @@
               <option value="incidents">Most incidents</option>
             </select>
           </label>
+          <label>
+            Issue filter
+            <select id="issueSelect">
+              <option value="all">All issue types</option>
+              <option value="crosswalk">Crosswalks</option>
+              <option value="lane">Lane guidance</option>
+              <option value="bike">Bike conflicts</option>
+              <option value="visibility">Night visibility</option>
+            </select>
+          </label>
           <label class="toggle">
             <input id="schoolZoneToggle" type="checkbox" />
             <span>School-zone emphasis</span>
           </label>
+        </section>
+
+        <section class="scenario-strip" aria-label="Budget scenarios">
+          <button class="scenario-card active" type="button" data-budget="85000" data-priority="impact">
+            <span>Recommended package</span>
+            <strong>$85k</strong>
+            <small>Best near-term safety mix</small>
+          </button>
+          <button class="scenario-card" type="button" data-budget="50000" data-priority="value">
+            <span>Quick wins</span>
+            <strong>$50k</strong>
+            <small>Lowest cost per benefit point</small>
+          </button>
+          <button class="scenario-card" type="button" data-budget="150000" data-priority="incidents">
+            <span>Crash reduction push</span>
+            <strong>$150k</strong>
+            <small>Prioritize incident clusters</small>
+          </button>
         </section>
 
         <div class="content-grid">
@@ -102,7 +115,7 @@
                 <h2>Detected intersections</h2>
                 <p id="mapCaption">Risk-ranked from imagery, incidents, and estimated marking age.</p>
               </div>
-              <span class="status-pill">Model v0.1</span>
+              <span class="status-pill">Model v0.2</span>
             </div>
             <div class="map-stage">
               <canvas id="cityMap" width="920" height="620" aria-label="Illustrated city map with intersection risk points"></canvas>
@@ -115,28 +128,52 @@
               <span id="detailRank" class="rank-badge">#1</span>
             </div>
             <div class="score-row">
-              <div>
-                <span>Risk score</span>
-                <strong id="riskScore">0</strong>
-              </div>
-              <div>
-                <span>Cost range</span>
-                <strong id="costRange">$0</strong>
-              </div>
-              <div>
-                <span>Benefit</span>
-                <strong id="benefitScore">0%</strong>
-              </div>
+              <div><span>Risk score</span><strong id="riskScore">0</strong></div>
+              <div><span>Cost range</span><strong id="costRange">$0</strong></div>
+              <div><span>Benefit</span><strong id="benefitScore">0%</strong></div>
             </div>
 
+            <div class="detail-tags" id="detailTags"></div>
             <div class="evidence-list" id="evidenceList"></div>
 
             <div class="recommendation-box">
               <h3>Recommended update</h3>
               <p id="recommendationText"></p>
             </div>
+
+            <div class="implementation-box">
+              <h3>Implementation notes</h3>
+              <ul id="implementationList"></ul>
+            </div>
           </section>
         </div>
+
+        <section class="report-section" aria-label="City report preview">
+          <div class="section-heading">
+            <div>
+              <h2>Report preview</h2>
+              <span id="reportSubtitle">Draft package for public works review</span>
+            </div>
+            <button class="secondary-button" id="copyReportBtn" type="button">Copy report summary</button>
+          </div>
+          <div class="report-grid">
+            <article class="report-card">
+              <span>Funding package</span>
+              <strong id="reportPackage">$0</strong>
+              <p id="reportPackageText">No intersections selected.</p>
+            </article>
+            <article class="report-card">
+              <span>Recommended scope</span>
+              <strong id="reportScope">0 sites</strong>
+              <p id="reportScopeText">Adjust the budget to build a work order.</p>
+            </article>
+            <article class="report-card">
+              <span>Procurement read</span>
+              <strong id="reportProcurement">Small bid</strong>
+              <p id="reportProcurementText">Uses pavement marking vendors and standard maintenance crews.</p>
+            </article>
+          </div>
+        </section>
 
         <section class="table-section" aria-label="Prioritized intersections">
           <div class="section-heading">
