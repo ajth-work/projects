@@ -31,10 +31,30 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare TrafficMark site
+        shell: bash
+        run: |
+          mkdir -p _site/TrafficMark
+          cp -R "Personal Projects/TrafficMark"/. _site/TrafficMark/
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <meta http-equiv="refresh" content="0; url=./TrafficMark/">
+              <title>TrafficMark ML</title>
+            </head>
+            <body>
+              <a href="./TrafficMark/">Open TrafficMark ML</a>
+            </body>
+          </html>
+          HTML
+
       - name: Upload TrafficMark site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "Personal Projects/TrafficMark"
+          path: "_site"
 
       - name: Deploy to GitHub Pages
         id: deployment
