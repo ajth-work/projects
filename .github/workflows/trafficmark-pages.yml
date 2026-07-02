@@ -34,7 +34,9 @@ jobs:
       - name: Prepare TrafficMark site
         shell: bash
         run: |
+          mkdir -p "_site/Personal Projects/TrafficMark"
           mkdir -p _site/TrafficMark
+          cp -R "Personal Projects/TrafficMark"/. "_site/Personal Projects/TrafficMark/"
           cp -R "Personal Projects/TrafficMark"/. _site/TrafficMark/
           cat > _site/index.html <<'HTML'
           <!doctype html>
@@ -42,11 +44,11 @@ jobs:
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <meta http-equiv="refresh" content="0; url=./TrafficMark/">
+              <meta http-equiv="refresh" content="0; url=./Personal%20Projects/TrafficMark/">
               <title>TrafficMark ML</title>
             </head>
             <body>
-              <a href="./TrafficMark/">Open TrafficMark ML</a>
+              <a href="./Personal%20Projects/TrafficMark/">Open TrafficMark ML</a>
             </body>
           </html>
           HTML
