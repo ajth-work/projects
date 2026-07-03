@@ -1,0 +1,118 @@
+/*
+  UNIVERSAL DESIGN SYSTEM: Material Design 3 + 8px Grid
+  Compatible with Modern Google App aesthetics
+*/
+
+:root {
+  /* MD3 Tonal Palette */
+  --bg: #0b0f13;
+  --header-bg: rgba(11, 15, 19, 0.82);
+  --panel: #1a1f26;
+  --panel-2: #242a33;
+  --text: #e2e8f0;
+  --muted: #9aa7b8;
+  --line: rgba(255, 255, 255, 0.08);
+
+  /* Accent Colors */
+  --green: #35d07f;
+  --blue: #4a90e2;
+  --red: #ff5c5c;
+  --amber: #f4b63f;
+  --near-black: #070a0d;
+
+  /* Spacing Scale (8px Grid) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-ms: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow: 0 4px 12px rgba(0,0,0,0.15);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.25);
+}
+
+/* Base Mobile-First Resets */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Google Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  transition: padding-bottom 0.2s ease;
+}
+
+body.nav-style-navbar { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+
+/* Layout Components */
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--header-bg);
+  backdrop-filter: blur(10px);
+  padding: calc(var(--space-md) + env(safe-area-inset-top)) var(--space-lg) var(--space-md);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-page {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Floating FAB Menu */
+.radial-menu {
+  position: fixed;
+  right: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 110;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Bottom Navbar */
+.bottom-navbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(80px + env(safe-area-inset-bottom));
+  background: var(--header-bg);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  display: none;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: center;
+  padding: 0 var(--space-xs) env(safe-area-inset-bottom);
+  z-index: 100;
+}
+
+body.nav-style-navbar .bottom-navbar { display: grid; }
+body.nav-style-navbar .radial-menu { display: none; }
+
+/* Utilities */
+.hidden { display: none !important; }
+.subtle { color: var(--muted); font-size: 0.85rem; }
+.primary-btn {
+  background: var(--green);
+  color: var(--near-black);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 1rem;
+}

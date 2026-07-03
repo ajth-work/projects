@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>New App - Base</title>
+    <link rel="stylesheet" href="design-system.css" />
+  </head>
+  <body>
+    <!-- Top App Bar -->
+    <header class="app-nav">
+      <div class="brand"><strong><span>App</span><span>Name</span></strong></div>
+      <div class="profile-pill">User</div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-page">
+      <h1>Dashboard</h1>
+      <p class="subtle">Start building here.</p>
+    </main>
+
+    <!-- Corner FAB Menu (Style A) -->
+    <div id="radialMenu" class="radial-menu">
+      <button id="menuToggle" class="fab-toggle">+</button>
+      <nav class="radial-items">
+        <!-- Add Items Here -->
+      </nav>
+    </div>
+    <div id="radialOverlay" class="radial-overlay"></div>
+
+    <!-- Bottom Navbar (Style B) -->
+    <nav class="bottom-navbar">
+      <a href="#" class="nav-item active">Home</a>
+      <a href="#" class="nav-item">Search</a>
+      <button id="navPlusAction">+</button>
+      <a href="#" class="nav-item">Profile</a>
+    </nav>
+
+    <!-- Center Quick Action Overlay -->
+    <div id="actionOverlay" class="action-overlay">
+      <div class="action-options">
+        <!-- Add Actions Here -->
+      </div>
+      <button id="closeActions">✕</button>
+    </div>
+
+    <script src="app-shell.js"></script>
+  </body>
+</html>
