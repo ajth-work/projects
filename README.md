@@ -27,6 +27,8 @@ This GitHub repository showcases projects completed across my learning journey, 
 
 - I like developing tools that connect over the internet, like Docker containers that enable me to access my computer remotely and Google Forms that connect via the Cloud to Power BI to update dashboard visualizations.
 
+- `Personal Projects/Barcode Scanner/` contains **BinoCart**, a mobile-first independent shopping intelligence prototype. BinoCart currently includes barcode lookup, Local Market Pulse, Pulse cart planning, saved/list/history/profile pages, receipt memory prototypes, automated tests, GitHub Pages deployment, and Android packaging through Capacitor.
+
 ### Project Datasets
 
 - Datasets and other resources used across my various projects. These are included for reference and reproducibility, using relative paths in my projects where possible.
